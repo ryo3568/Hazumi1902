@@ -7,11 +7,9 @@ class EarlyStopping:
         self.verbose = verbose 
 
     def __call__(self, loss):
-        if self._loss < loss:
+        if self._loss <= loss:
             self._step += 1 
             if self._step > self.patience:
-                if self.verbose:
-                    print('early stopping') 
                 return True 
         else:
             self._step = 0 
