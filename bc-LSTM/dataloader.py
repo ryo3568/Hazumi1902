@@ -15,6 +15,17 @@ class IEMOCAPDataset(Dataset):
         '''
         self.keys = [x for x in (self.trainVid if train else self.testVid)]
 
+        for key, values in self.videoLabels.items():
+            new_list = []
+            for v in values:
+                if v == 0 or v == 4:
+                    new_list.append(2)
+                elif v == 2:
+                    new_list.append(1)
+                else:
+                    new_list.append(0)
+            self.videoLabels[key] = new_list
+
         self.len = len(self.keys)
 
     def __getitem__(self, index):

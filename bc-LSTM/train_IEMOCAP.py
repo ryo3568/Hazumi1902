@@ -125,7 +125,7 @@ if __name__ == '__main__':
     cuda       = args.cuda
     n_epochs   = args.epochs
     
-    n_classes  = 6
+    n_classes  = 3
     D_m = 100
     D_e = 100
     D_h = 100
@@ -185,4 +185,4 @@ if __name__ == '__main__':
                                      round(f1_score(best_label, best_pred, sample_weight=best_mask, average='weighted')*100, 2)))
     print(classification_report(best_label, best_pred, sample_weight=best_mask, digits=4))
     print(confusion_matrix(best_label, best_pred, sample_weight=best_mask))
-    print(accuracy_score(best_label, best_pred, sample_weight=best_mask))
+    print('accuracy(weight) : ',accuracy_score(best_label, best_pred, sample_weight=best_mask))
