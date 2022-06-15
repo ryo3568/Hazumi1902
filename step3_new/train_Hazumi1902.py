@@ -88,7 +88,9 @@ def train_or_eval_model(model, loss_function, dataloader, epoch, optimizer=None,
         log_prob, alpha, alpha_f, alpha_b = model(textf, umask) 
         lp_ = log_prob.transpose(0, 1).contiguous().view(-1, log_prob.size()[2])
         labels_ = label.view(-1) 
-        loss = loss_function(lp_, labels_, umask)
+        #CrossEntropyに変更
+        # loss = loss_function(lp_, labels_, umask)
+        loss = loss_function(lp_, labels_)
 
         pred_ = torch.argmax(lp_, 1) 
         preds.append(pred_.data.cpu().numpy())
@@ -152,7 +154,7 @@ if __name__ == '__main__':
     n_epochs   = args.epochs
     
     n_classes  = 3
-    D_m = 100
+    D_m = 967
     D_e = 100
     D_h = 100
 
@@ -170,12 +172,13 @@ if __name__ == '__main__':
     if cuda:
         model.cuda()
         
-    loss_weights = torch.FloatTensor([1.0, 0.60072, 0.38066, 0.54019, 0.67924, 0.34332])
-    
-    if args.class_weight:
-        loss_function  = MaskedNLLLoss(loss_weights.cuda() if cuda else loss_weights)
-    else:
-        loss_function = MaskedNLLLoss()
+    loss_weights = torch.FloatTensor([1.0, 0.5, 0.001])
+    #CrossEntropyに変更
+    # if args.class_weight:
+    #     loss_function  = MaskedNLLLoss(loss_weights.cuda() if cuda else loss_weights)
+    # else:
+    #     loss_function = MaskedNLLLoss()
+    loss_function = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(),
                            lr=args.lr,
                            weight_decay=args.l2)

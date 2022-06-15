@@ -294,7 +294,6 @@ class LSTMModel(nn.Module):
         U -> seq_len, batch, D_m
         qmask -> seq_len, batch, party
         """
-        print(U.size())
         emotions, hidden = self.lstm(U)
         alpha, alpha_f, alpha_b = [], [], []
         
@@ -334,7 +333,7 @@ class FNNModel(nn.Module):
         emotions = self.linear1(U) 
         alpha, alpha_f, alpha_b = [], [], []
 
-        hidden = F.relu(self.linear1(emotions)) 
+        hidden = F.relu(self.linear2(emotions)) 
         hidden = self.dropout(hidden) 
         log_prob = F.log_softmax(self.smax_fc(hidden), 2) 
         return log_prob, alpha, alpha_f, alpha_b
