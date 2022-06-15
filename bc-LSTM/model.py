@@ -289,7 +289,8 @@ class LSTMModel(nn.Module):
         self.linear = nn.Linear(2*D_e, D_h)
         self.smax_fc = nn.Linear(D_h, n_classes)
 
-    def forward(self, U, qmask, umask):
+    #qmaskの除去
+    def forward(self, U, umask):
         """
         U -> seq_len, batch, D_m
         qmask -> seq_len, batch, party
@@ -329,7 +330,7 @@ class FNNModel(nn.Module):
         self.linear2 = nn.Linear(D_e, D_h) 
         self.smax_fc = nn.Linear(D_h, n_classes) 
 
-    def forward(self, U, qmask, umask):
+    def forward(self, U, umask):
         emotions = self.linear1(U) 
         alpha, alpha_f, alpha_b = [], [], []
 

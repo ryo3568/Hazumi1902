@@ -54,12 +54,13 @@ def train_or_eval_model(model, loss_function, dataloader, epoch, optimizer=None,
     for data in dataloader:
         if train:
             optimizer.zero_grad()
-        
-        textf, visuf, acouf, qmask, umask, label =\
+        #qmaskの除去
+        textf, visuf, acouf, umask, label =\
                 [d.cuda() for d in data[:-1]] if cuda else data[:-1]
         
         # log_prob = model(torch.cat((textf, acouf, visuf), dim=-1), qmask, umask) 
-        log_prob, alpha, alpha_f, alpha_b = model(textf, qmask, umask) 
+        #qmaskの除去
+        log_prob, alpha, alpha_f, alpha_b = model(textf, umask) 
         lp_ = log_prob.transpose(0, 1).contiguous().view(-1, log_prob.size()[2])
         labels_ = label.view(-1) 
         loss = loss_function(lp_, labels_, umask)

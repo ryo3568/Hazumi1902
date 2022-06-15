@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 from sklearn.metrics import f1_score, confusion_matrix, accuracy_score, classification_report
 from model import LSTMModel, MaskedNLLLoss, FNNModel
-from dataloader import IEMOCAPDataset
+from dataloader import IEMOCAPDataset, HazumiDataset
 
 def get_train_valid_sampler(trainset, valid=0.1):
     size = len(trainset)
@@ -40,6 +40,32 @@ def get_IEMOCAP_loaders(path, batch_size=32, valid=0.1, num_workers=0, pin_memor
 
     return train_loader, valid_loader, test_loader
 
+def get_Hazumi_loaders(testfile, batch_size=32, valid=0.1, num_workers=0, pin_memory=False):
+    trainset = HazumiDataset(testfile)
+    testset = HazumiDataset(testfile, train=False)
+    
+    train_sampler, valid_sampler = get_train_valid_sampler(trainset, valid)
+    train_loader = DataLoader(trainset,
+                              batch_size=batch_size,
+                              sampler=train_sampler,
+                              collate_fn=trainset.collate_fn,
+                              num_workers=num_workers,
+                              pin_memory=pin_memory)
+    valid_loader = DataLoader(trainset,
+                              batch_size=batch_size,
+                              sampler=valid_sampler,
+                              collate_fn=trainset.collate_fn,
+                              num_workers=num_workers,
+                              pin_memory=pin_memory)
+    test_loader = DataLoader(testset,
+                             batch_size=batch_size,
+                             collate_fn=testset.collate_fn,
+                             num_workers=num_workers,
+                             pin_memory=pin_memory)
+
+    return train_loader, valid_loader, test_loader
+
+
 def train_or_eval_model(model, loss_function, dataloader, epoch, optimizer=None, train=False):
     losses = []
     preds = []
@@ -55,11 +81,11 @@ def train_or_eval_model(model, loss_function, dataloader, epoch, optimizer=None,
         if train:
             optimizer.zero_grad()
         
-        textf, visuf, acouf, qmask, umask, label =\
+        textf, visuf, acouf, umask, label =\
                 [d.cuda() for d in data[:-1]] if cuda else data[:-1]
         
         # log_prob = model(torch.cat((textf, acouf, visuf), dim=-1), qmask, umask) 
-        log_prob, alpha, alpha_f, alpha_b = model(textf, qmask, umask) 
+        log_prob, alpha, alpha_f, alpha_b = model(textf, umask) 
         lp_ = log_prob.transpose(0, 1).contiguous().view(-1, log_prob.size()[2])
         labels_ = label.view(-1) 
         loss = loss_function(lp_, labels_, umask)
@@ -154,9 +180,10 @@ if __name__ == '__main__':
                            lr=args.lr,
                            weight_decay=args.l2)
 
-    train_loader, valid_loader, test_loader = get_IEMOCAP_loaders('IEMOCAP_features/IEMOCAP_features_raw.pkl',
+    train_loader, valid_loader, test_loader = get_Hazumi_loaders('../data/dumpfiles/1902F2001.csv',
                                                                   batch_size=batch_size,
                                                                   valid=0.0)
+
 
     best_loss, best_label, best_pred, best_mask = None, None, None, None
 
