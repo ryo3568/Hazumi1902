@@ -5,6 +5,7 @@ import torch
 from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
 import pickle
+import random
 import pandas as pd
 
 from utils.dataset import Hazumi
@@ -52,13 +53,16 @@ class IEMOCAPDataset(Dataset):
 
 class HazumiDataset(Dataset):
 
-    def __init__(self, testfile, train=True):
+    def __init__(self, testfile, rate=1.0, train=True):
         hazumi = Hazumi(testfile)
         self.videoLabels, self.videoText, self.videoAudio,\
         self.videoVisual, self.trainVid, self.testVid = hazumi.load()
         
+        self.trainVid = random.sample(self.trainVid, int(rate*len(self.trainVid)))
         self.keys = [x for x in (self.trainVid if train else self.testVid)]
         self.len = len(self.keys)
+
+        print(len(self.trainVid))
 
     def __getitem__(self, index):
         vid = self.keys[index]
@@ -70,6 +74,7 @@ class HazumiDataset(Dataset):
                torch.LongTensor(self.videoLabels[vid]),\
                vid
 
+        
     def __len__(self):
         return self.len 
     

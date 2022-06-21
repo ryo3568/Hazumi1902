@@ -44,8 +44,8 @@ def get_IEMOCAP_loaders(path, batch_size=32, valid=0.1, num_workers=0, pin_memor
 
     return train_loader, valid_loader, test_loader
 
-def get_Hazumi_loaders(testfile, batch_size=32, valid=0.1, num_workers=0, pin_memory=False):
-    trainset = HazumiDataset(testfile)
+def get_Hazumi_loaders(testfile, batch_size=32, valid=0.1, num_workers=0, pin_memory=False, rate=1.0):
+    trainset = HazumiDataset(testfile, rate=rate)
     testset = HazumiDataset(testfile,train=False)
     
     train_sampler, valid_sampler = get_train_valid_sampler(trainset, valid)
@@ -88,8 +88,7 @@ def train_or_eval_model(model, loss_function, dataloader, epoch, optimizer=None,
         textf, visuf, acouf, umask, label =\
                 [d.cuda() for d in data[:-1]] if cuda else data[:-1]
         
-        # log_prob = model(torch.cat((textf, acouf, visuf), dim=-1), qmask, umask) 
-        log_prob, alpha, alpha_f, alpha_b = model(textf, umask) 
+        log_prob, alpha, alpha_f, alpha_b = model(torch.cat((textf, acouf, visuf), dim=-1), umask)  
         lp_ = log_prob.transpose(0, 1).contiguous().view(-1, log_prob.size()[2])
         labels_ = label.view(-1) 
         #CrossEntropyに変更
@@ -159,7 +158,7 @@ if __name__ == '__main__':
     n_epochs   = args.epochs
     
     n_classes  = 3
-    D_m = 967
+    D_m = 1417
     D_e = 100
     D_h = 100
 
@@ -198,7 +197,8 @@ if __name__ == '__main__':
 
         train_loader, valid_loader, test_loader = get_Hazumi_loaders(testfile,
                                                                   batch_size=batch_size,
-                                                                  valid=0.1)
+                                                                  valid=0.1,
+                                                                  rate=args.rate)
 
 
         best_loss, best_label, best_pred, best_mask = None, None, None, None
@@ -220,6 +220,7 @@ if __name__ == '__main__':
             # print('epoch {} train_loss {} train_acc {} train_fscore {} valid_loss {} valid_acc {} val_fscore {} test_loss {} test_acc {} test_fscore {} time {}'.\
             #         format(e+1, train_loss, train_acc, train_fscore, valid_loss, valid_acc, val_fscore,\
             #                 test_loss, test_acc, test_fscore, round(time.time()-start_time, 2)))
+
         if args.tensorboard:
             writer.close()
 
@@ -230,6 +231,7 @@ if __name__ == '__main__':
         print(confusion_matrix(best_label, best_pred, sample_weight=best_mask))
         print('accuracy(weight) : ',accuracy_score(best_label, best_pred, sample_weight=best_mask))
         all_score.append(accuracy_score(best_label, best_pred))
+    
 
     print(all_score)
     print(np.array(all_score).mean())
